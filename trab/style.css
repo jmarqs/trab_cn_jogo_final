@@ -1,0 +1,75 @@
+/*estilo para upload container*/
+#upload-container {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/*reset para todos os elementos*/
+* {
+    margin: 0;
+    padding: 0;
+}
+
+/*estilo para todos os elementos*/
+body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    background-color: rgb(99, 96, 96);
+    display: grid;
+    place-items: center;
+    align-items: center;
+    justify-content: center;
+    background-size: cover;
+    background-position: center;
+}
+
+/*estilo para h1*/
+h1 {
+    margin: 50px 0 50px 0;
+    font-size: 3rem;
+}
+
+/*estilo da caixa de texto*/
+input {
+    margin-bottom: 20px;
+    padding: 5px;
+    font-size: 1.2rem;
+}
+
+/*estilo para botoes*/
+button {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+}
+
+/*estilo para todas as imagens (a aguardar oponente)*/
+img {
+    width: 476px;
+    height: 278px;
+    border-radius: 40px;
+    border: 5px solid;
+    border-color: blue;
+}
+
+#cont {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    border: 2px solid red;
+}
+
+/*botoes da tabela do jogo do galo*/
+.btn {
+    font-size: 2rem;
+    width: 100px;
+    height: 100px;
+    color: white;
+    cursor: pointer;
+    margin: 0;
+    background-color: rgb(167, 228, 230);
+}
+
+/*botoes da tabela do jogo do galo, quando passado com o cursor*/
+.btn:hover {
+    background-color: rgb(62, 173, 179);
+}

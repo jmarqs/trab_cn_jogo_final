@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo Do Galo</title>
+</head>
+
+<style>
+    /*import da fonte*/
+    @import url('https://fonts.googleapis.com/css2?family=Lilita+One&display=swap');
+    
+    /*usar a fonte importada*/
+    h1{
+        font-family: 'Lilita One';
+    }
+
+    /*reset para todos os elementos*/
+    * {
+        margin: 0;
+        padding: 0;
+    }
+
+    /*imagem do galo de barcelos*/
+    .galo{
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 254px;
+        height: 254px;
+        border-radius: 0px;
+        border: 0px solid;
+        border-color: white;
+    }
+
+    /*estilo para todos os elementos*/
+    body {
+        background-color: rgb(255, 255, 255);
+        display: grid;
+        place-items: center;
+        font-family: 'Tilt Warp', cursive;
+    }
+
+    /*estilo para h1*/
+    h1 {
+        margin: 50px 0 50px 0;
+        font-size: 5rem;
+        color: rgb(7, 106, 225);
+        -webkit-text-stroke: 0.2px black;
+    }
+
+    /*estilo da caixa de texto*/
+    input {
+        margin-bottom: 20px;
+        padding: 5px;
+        font-size: 1.2rem;
+    }
+
+    /*estilo para botoes*/
+    button {
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+    }
+
+    /*estilo para todas as imagens (a aguardar oponente)*/
+    img {
+        width: 476px;
+        height: 278px;
+        border-radius: 40px;
+        border: 5px solid;
+        border-color: blue;
+    }
+
+    #cont {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    /*botoes da tabela do jogo do galo*/
+    .btn {
+        font-size: 2rem;
+        width: 100px;
+        height: 100px;
+        cursor: pointer;
+        margin: 0;
+        background-color: rgb(167, 228, 230);
+        border-radius: 10px;
+    }
+
+    #find {
+        font-size: 1.5rem;
+        color: rgb(255, 255, 255);
+        cursor: pointer;
+        padding: 7px;
+        border-radius: 10px;
+        width: 250px;
+        background-color: rgb(0, 0, 0);
+    }
+
+    /*botoes da tabela do jogo do galo, quando passado com o cursor*/
+    .btn:hover {
+        background-color: rgb(62, 173, 179);
+    }
+
+    button.enabled {
+        opacity: 1;
+    }
+
+    /*estilo para paragrafos*/
+    p {
+        font-size: 2rem;
+    }
+</style>
+
+<body>
+    <!--enviar fotografia e definir como fundo-->
+    <div id="upload-container">
+        <input type="file" id="imageInput" accept="image/*">
+        <button onclick="setBackground()">Definir Fundo</button>
+        <script src="script.js"></script>
+    </div>
+
+    <h1>O Famoso Jogo Do Galo</h1>
+    <img src="galo.jpg" class="galo">
+
+    <div style="display: flex; width: 95vw; position: relative;">
+        <p style="font-family: Arial, Helvetica, sans-serif;" id="userCont">Meu nome : <span id="user"></span></p>
+        <p style="position: absolute; right: 0; font-family: Arial, Helvetica, sans-serif;" id="oppNameCont">Nome do oponente : <span id="oppName"></span></p>
+    </div>
+    <br>
+    <p style="font-family: Arial, Helvetica, sans-serif;" id="valueCont">As minhas peças são :<span id="value"></span></p>
+    <br>
+    <p style="font-family: Arial, Helvetica, sans-serif;"id="whosTurn">É a vez de jogarem as cruzes (X)</p>
+    <div>
+        <p style="font-size: 1.2rem; font-family: Arial, Helvetica, sans-serif;" id="enterName">Introduz o teu nome : </p>
+        <input style="font-family: Arial, Helvetica, sans-serif;" type="text" placeholder="O teu nome" id="name" autocomplete="off">
+    </div>
+    <button style="font-family: Arial, Helvetica, sans-serif;"id="find">Procurar um jogador</button>
+    <img id="loading" src="registado.png" alt="">
+    <!--tabela de jogo-->
+    <div id="bigcont">
+        <div id="cont">
+            <button id="btn1" class="btn"></button>
+            <button id="btn2" class="btn"></button>
+            <button id="btn3" class="btn"></button>
+            <button id="btn4" class="btn"></button>
+            <button id="btn5" class="btn"></button>
+            <button id="btn6" class="btn"></button>
+            <button id="btn7" class="btn"></button>
+            <button id="btn8" class="btn"></button>
+            <button id="btn9" class="btn"></button>
+        </div>
+    </div>
+</body>
+
+<!--importa o script do Socket.IO-->
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+    //inicializa os elementos visuais
+    document.getElementById("loading").style.display = "none"
+    document.getElementById("bigcont").style.display = "none"
+    document.getElementById("userCont").style.display = "none"
+    document.getElementById("oppNameCont").style.display = "none"
+    document.getElementById("valueCont").style.display = "none"
+    document.getElementById("whosTurn").style.display = "none"
+    //inicia o socket.io
+    const socket = io();
+
+    let name;
+
+    //acontece quando se clica para procurar jogador
+    document.getElementById('find').addEventListener("click", function () {
+        //obtem o nome inserido pelo jogador
+        name = document.getElementById("name").value
+        document.getElementById("user").innerText = name
+        //verifica se nao esta a null
+        if (name == null || name == '') {
+            alert("Obrigatorio inserir um nome para poder jogar!")
+        }
+        else {
+            socket.emit("find", { name: name }) //manda para o .js
+            //informações para indicar que esta a aguardar oponente
+            document.getElementById("loading").style.display = "block"
+            document.getElementById("find").disabled = true;
+        }
+    })
+
+    //recebe o find do .js
+    socket.on("find", (e) => {
+        //obtem a lista de todos os jogadores
+        let allPlayersArray = e.allPlayers
+        console.log("html",allPlayersArray)
+        //verifica se o nome do jogador nao e vazio
+        if (name != '') {
+            //atualiza interface para exibir info do jogador e do oponente
+            document.getElementById("userCont").style.display = "block"
+            document.getElementById("oppNameCont").style.display = "block"
+            document.getElementById("valueCont").style.display = "block"
+            document.getElementById("loading").style.display = "none"
+            document.getElementById("name").style.display = "none"
+            document.getElementById("find").style.display = "none"
+            document.getElementById("enterName").style.display = "none"
+            document.getElementById("bigcont").style.display = "block"
+            document.getElementById("whosTurn").style.display = "block"
+            document.getElementById("whosTurn").innerText = "É a vez de jogarem as cruzes (X)"
+        }
+        //inicia as variaveis
+        let oppName
+        let value
+
+        //encontra o objeto correspondente ao jogador na lista de todos jogadores
+        const foundObject = allPlayersArray.find(obj => obj.p1.p1name == `${name}` || obj.p2.p2name == `${name}`);
+        //determina o nome do oponente e do valor das pecas
+        foundObject.p1.p1name == `${name}` ? oppName = foundObject.p2.p2name : oppName = foundObject.p1.p1name
+        foundObject.p1.p1name == `${name}` ? value = foundObject.p1.p1value : value = foundObject.p2.p2value
+        //atualiza interface com nome do oponente e das pecas
+        document.getElementById("oppName").innerText = oppName
+        document.getElementById("value").innerText = value
+    })
+
+    //eventos de clique para cada celula da tabela de jogo
+    document.querySelectorAll(".btn").forEach(e => {
+        e.addEventListener("click", function () {
+            //obtem o valor das pecas e manda o playing para .js (servidor)
+            let value = document.getElementById("value").innerText
+            e.innerText = value
+            socket.emit("playing", { value: value, id: e.id, name: name }) //manda para o .js
+        })
+    })
+
+    //recebe o playing do servidor (.js)
+    socket.on("playing", (e) => {
+        //encontra o objeto correspondente ao jogador na lista de todos jogadores
+        const foundObject = (e.allPlayers).find(obj => obj.p1.p1name == `${name}` || obj.p2.p2name == `${name}`);
+        //obtem os movimentos dos jogadores
+        p1id = foundObject.p1.p1move
+        p2id = foundObject.p2.p2move
+        //mensagem indicando de quem é a vez de jogar
+        if ((foundObject.sum) % 2 == 0) {
+            document.getElementById("whosTurn").innerText = "É a vez de jogarem os circulos (O)"
+        }
+        else {
+            document.getElementById("whosTurn").innerText = "É a vez de jogarem as cruzes (X)"
+        }
+        //atualiza celula da tabela de jogo com a peça do jogador
+        if (p1id != '') {
+            document.getElementById(`${p1id}`).innerText = "X"
+            document.getElementById(`${p1id}`).disabled = true
+            document.getElementById(`${p1id}`).style.color = "red"
+            document.getElementById(`${p1id}`).style.fontSize = "4em";
+        }
+        if (p2id != '') {
+            document.getElementById(`${p2id}`).innerText = "O"
+            document.getElementById(`${p2id}`).disabled = true
+            document.getElementById(`${p2id}`).style.color = "green"
+            document.getElementById(`${p2id}`).style.fontSize = "4em";
+        }
+        check(name, foundObject.sum)
+    })
+    //verifica estado jogo
+    function check(name, sum) {
+        //verifica os valores das celulas da tabela de jogo
+        document.getElementById("btn1").innerText == '' ? b1 = "a" : b1 = document.getElementById("btn1").innerText
+        document.getElementById("btn2").innerText == '' ? b2 = "b" : b2 = document.getElementById("btn2").innerText
+        document.getElementById("btn3").innerText == '' ? b3 = "c" : b3 = document.getElementById("btn3").innerText
+        document.getElementById("btn4").innerText == '' ? b4 = "d" : b4 = document.getElementById("btn4").innerText
+        document.getElementById("btn5").innerText == '' ? b5 = "e" : b5 = document.getElementById("btn5").innerText
+        document.getElementById("btn6").innerText == '' ? b6 = "f" : b6 = document.getElementById("btn6").innerText
+        document.getElementById("btn7").innerText == '' ? b7 = "g" : b7 = document.getElementById("btn7").innerText
+        document.getElementById("btn8").innerText == '' ? b8 = "h" : b8 = document.getElementById("btn8").innerText
+        document.getElementById("btn9").innerText == '' ? b9 = "i" : b9 = document.getElementById("btn9").innerText
+        //verifica as condições de vitoria
+        if ((b1 == b2 && b2 == b3) || (b4 == b5 && b5 == b6) || (b7 == b8 && b8 == b9) || (b1 == b4 && b4 == b7) || (b2 == b5 && b5 == b8) || (b3 == b6 && b6 == b9) || (b1 == b5 && b5 == b9) || (b3 == b5 && b5 == b7)) {
+            socket.emit("gameOver", { name: name }) //manda o gameOver para o .js (servidor)
+            //exibe mensagem de vitoria e recarrega a pagina após intervalo de tempo
+            setTimeout(() => {
+                sum % 2 == 0 ? alert("As cruzes ganharam!") : alert("Os circulos ganharam!")
+                setTimeout(() => {
+                    location.reload()
+                }, 2000)
+            }, 100)
+        }
+        else if (sum == 10) {
+            socket.emit("gameOver", { name: name }) //manda para o servidor (.js)
+            //exibe mensagem de empate e recarrega a pagina após intervalo de tempo
+            setTimeout(() => {
+                alert("As cruzes e os circulos empataram!")
+                setTimeout(() => {
+                    location.reload()
+                }, 2000)
+            }, 100)
+        }
+    }
+</script>
+</html>
